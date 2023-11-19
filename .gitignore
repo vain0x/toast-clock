@@ -1,0 +1,7 @@
+hsptmp
+obj
+packfile
+*.ax
+*.dpm
+*.exe
+*.i
