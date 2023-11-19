@@ -1,0 +1,159 @@
+; LICENSE: CC0-1.0 <https://creativecommons.org/publicdomain/zero/1.0/deed.ja>
+
+#packopt name "toast_clock"
+#packopt hide 1
+
+; ------------------------------------------------
+; 定数
+; ------------------------------------------------
+
+; 1時間 (millis)
+#const k_hour (60 * 60 * 1000)
+; 1分 (millis)
+#const k_min (60 * 1000)
+; 1秒 (millis)
+#const k_sec 1000
+
+; ポップアップのウィンドウID
+#const k_wid 2
+
+; ================================================
+
+*start
+
+	; 変数を初期化する
+#ifdef _DEBUG
+	; 10秒ごと
+	s_interval = 10 * k_sec
+#else
+	; 30分ごと
+	s_interval = 30 * k_min
+#endif
+
+	; ポップアップのウィンドウを用意する
+	bgscr k_wid, 200, 80, screen_hide
+	title "toast_clock"
+	font "Cascadia Mono", 36, font_bold
+	onclick gosub *on_click
+	onkey gosub *on_key
+
+	goto *main
+
+; メインループ
+*main
+
+	; 現在時刻 (ミリ秒単位)
+	s_millis = gettime(4) * k_hour + gettime(5) * k_min + gettime(6) * k_sec + gettime(7)
+
+	; 次にポップアップを出す時間 (インターバルの倍数に切り上げる)
+	s_next = (s_millis / s_interval + 1) * s_interval
+
+	; 次の待機時間
+	; (日付が変わる場合は 24:00:00 まで待つ)
+	if s_next > 24 * k_hour {
+		s_wait = 24 * k_hour - s_millis
+		s_skip = 1
+	} else {
+		s_wait = s_next - s_millis
+		s_skip = 0
+	}
+
+	logmes "now  = " + debug_time(s_millis)
+	logmes "next = " + debug_time(s_next)
+	logmes "wait = " + debug_time(s_wait)
+
+	; 時間が来るまで待つ
+	wait s_wait / 10
+	if s_skip : goto *main
+
+	; ポップアップを表示する
+	logmes "showing"
+	gsel k_wid, 2 ; 最前面に表示
+
+	s_dismiss = 0
+	s_win_dy = -20 ; Y座標
+
+#ifdef _DEBUG
+	s_millis = gettime(4) * k_hour + gettime(5) * k_min + gettime(6) * k_sec + gettime(7)
+	; s_millis = 12 * k_hour + 30 * k_min ; 12:30:00
+#endif
+
+	repeat 600 ; 最大10秒間、600フレーム
+		if s_dismiss : break
+
+#ifdef _DEBUG
+		s_millis += 16
+#else
+		s_millis = gettime(4) * k_hour + gettime(5) * k_min + gettime(6) * k_sec + gettime(7)
+#endif
+
+		width , , ginfo_dispx - ginfo_sizex - 8, ginfo_dispy - ginfo_sizey - 8 - s_win_dy
+		if s_win_dy < 40 {
+			s_win_dy += 2 ; 上に移動するアニメーション
+		}
+
+		s_hue = 120 ; 色味
+		s_val = 0xFD ; 明るさ
+
+		redraw 2
+		hsvcolor s_hue, 0xF3, 0x9D ; 縁
+		boxf
+
+		hsvcolor s_hue, 0x66, s_val ; 背景
+		boxf 1, 1, ginfo_winx - 2, ginfo_winy - 2
+
+		pos 17, 14
+		hsvcolor s_hue, 0xF3, 0x33
+		mes time_to_string(s_millis)
+		redraw
+
+		await 16 ; 1000/60
+	loop
+
+	logmes "hidden"
+	gsel k_wid, -1 ; 非表示にする
+
+	goto *main
+
+*on_click
+
+	logmes "on_click " + iparam
+	s_dismiss = 1
+	return
+
+*on_key
+
+	logmes "on_key " + iparam
+
+	; 13: Enter, 27: Esc
+	if iparam == 13 || iparam == 27 {
+		s_dismiss = 1
+	}
+	return
+
+; ================================================
+
+#module
+
+; 時刻を "H:mm:ss" 形式の文字列にする (表示用)
+#defcfunc time_to_string int tick, \
+	local t, local h, local mi, local s
+
+	t = tick / 1000
+	s = t \ 60 : t /= 60 ; 秒
+	mi = t \ 60 : t /= 60 ; 分
+	h = t ; 時
+	return strf("%2d:%02d:%02d", h, mi, s)
+
+; 時刻を "H:mm:ss.fff" 形式の文字列にする (デバッグ用)
+#defcfunc debug_time int tick, \
+	local t, local h, local mi, local s, local ms
+
+	t = tick
+	ms = t \ 1000 : t /= 1000
+	s = t \ 60 : t /= 60
+	mi = t \ 60 : t /= 60
+	h = t
+	return strf("%02d:%02d:%02d.%03d", h, mi, s, ms)
+
+#global
