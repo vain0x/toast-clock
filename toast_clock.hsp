@@ -3,6 +3,8 @@
 #packopt name "toast_clock"
 #packopt hide 1
 
+#include "kernel32.as" ; CreateMutex ‚Ì‚½‚ß
+
 ; ------------------------------------------------
 ; ’è”
 ; ------------------------------------------------
@@ -20,6 +22,14 @@
 ; ================================================
 
 *start
+
+	; ‘½d‹N“®‚ğ–h~‚·‚é <http://lhsp.s206.xrea.com/hsp_system.html#5>
+	CreateMutex 0, 0, "toast_clock"
+	GetLastError
+	if stat == 0x00B7 { ; ERROR_ALREADY_EXISTS
+		dialog "toast_clock ‚Í‚·‚Å‚ÉÀs’†‚Å‚·", 1
+		end 1
+	}
 
 	; •Ï”‚ğ‰Šú‰»‚·‚é
 #ifdef _DEBUG
