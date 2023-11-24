@@ -40,6 +40,23 @@
 	s_interval = 30 * k_min
 #endif
 
+	; 色相(hue)のテーブル
+	; 色相の値は0が赤、60ぐらいが緑、120ぐらいが青、最大値は191
+	s_hue = 120
+	s_hue_len = 5
+	dim s_hue_t, s_hue_len
+	ddim s_hue_h, s_hue_len
+	s_hue_t(1) = 7 * k_hour ; 朝 7:00, 赤
+	s_hue_h(1) = 0.0
+	s_hue_t(2) = 15 * k_hour ; 昼 15:00, 緑
+	s_hue_h(2) = 60.0
+	s_hue_t(3) = 23 * k_hour ; 夜 23:00, 青
+	s_hue_h(3) = 120.0
+	s_hue_t(4) = 24 * k_hour
+	s_hue_h(4) = 120.0 + (190.0 - 120) / 8 ; 23:00～7:00 の1時間分進む
+	s_hue_t(0) = 0
+	s_hue_h(0) = s_hue_h(4)
+
 	; ポップアップのウィンドウを用意する
 	bgscr k_wid, 200, 80, screen_hide
 	title "toast_clock"
@@ -93,7 +110,7 @@
 		if s_dismiss : break
 
 #ifdef _DEBUG
-		s_millis += 16
+		s_millis = (s_millis + 16) \ (24 * k_hour)
 #else
 		s_millis = gettime(4) * k_hour + gettime(5) * k_min + gettime(6) * k_sec + gettime(7)
 #endif
@@ -103,7 +120,18 @@
 			s_win_dy += 2 ; 上に移動するアニメーション
 		}
 
-		s_hue = 120 ; 色味
+		; 時間から色相を計算する
+		repeat s_hue_len
+			; s_hue_t(cnt) <= it && it <= s_hue_t(cnt + 1) となる cnt をみつける
+			if s_millis <= s_hue_t(cnt + 1) {
+				; 区間内での進行度 (p = (x - a)/(b - a))
+				s_progress = double(s_millis - s_hue_t(cnt)) / (s_hue_t(cnt + 1) - s_hue_t(cnt))
+				; 区間内での位置 s_progress における色相 (h = (b - a)・p + a)
+				s_hue = int((s_hue_h(cnt + 1) - s_hue_h(cnt)) * s_progress + s_hue_h(cnt))
+				break
+			}
+		loop
+
 		s_border_val = 0x9D ; 明るさ
 		s_bg_val = 0xFD
 		s_fg_val = 0x33
