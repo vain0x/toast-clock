@@ -4,6 +4,7 @@
 #packopt hide 1
 
 #include "kernel32.as" ; CreateMutex のため
+#include "user32.as" ; GetForegroundWindow のため
 
 ; ------------------------------------------------
 ; 定数
@@ -63,7 +64,6 @@
 	font "Cascadia Mono", 36, font_bold
 	onclick gosub *on_click
 	onkey gosub *on_key
-	oncmd gosub *on_activate, 0x0006 ; WM_ACTIVATE
 
 	goto *main
 
@@ -136,6 +136,7 @@
 		s_bg_val = 0xFD
 		s_fg_val = 0x33
 
+		s_active = GetForegroundWindow() == hwnd
 		if s_active == 0 { ; 非アクティブなら暗め
 			s_border_val = int(0.8 * s_border_val)
 			s_bg_val = int(0.8 * s_bg_val)
@@ -176,13 +177,6 @@
 	if iparam == 13 || iparam == 27 {
 		s_dismiss = 1
 	}
-	return
-
-*on_activate
-
-	; ウィンドウがアクティブかどうか変化したときに呼ばれる。
-	; (wparamの下位ワードが0以外ならアクティブ)
-	s_active = (wparam & 0xFFFF) != 0
 	return
 
 ; ================================================
