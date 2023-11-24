@@ -46,6 +46,7 @@
 	font "Cascadia Mono", 36, font_bold
 	onclick gosub *on_click
 	onkey gosub *on_key
+	oncmd gosub *on_activate, 0x0006 ; WM_ACTIVATE
 
 	goto *main
 
@@ -103,17 +104,25 @@
 		}
 
 		s_hue = 120 ; 色味
-		s_val = 0xFD ; 明るさ
+		s_border_val = 0x9D ; 明るさ
+		s_bg_val = 0xFD
+		s_fg_val = 0x33
+
+		if s_active == 0 { ; 非アクティブなら暗め
+			s_border_val = int(0.8 * s_border_val)
+			s_bg_val = int(0.8 * s_bg_val)
+			s_fg_val = int(0.8 * s_fg_val)
+		}
 
 		redraw 2
-		hsvcolor s_hue, 0xF3, 0x9D ; 縁
+		hsvcolor s_hue, 0xF3, s_border_val ; 縁 (border)
 		boxf
 
-		hsvcolor s_hue, 0x66, s_val ; 背景
+		hsvcolor s_hue, 0x66, s_bg_val ; 背景 (background)
 		boxf 1, 1, ginfo_winx - 2, ginfo_winy - 2
 
 		pos 17, 14
-		hsvcolor s_hue, 0xF3, 0x33
+		hsvcolor s_hue, 0xF3, s_fg_val ; 文字 (foreground)
 		mes time_to_string(s_millis)
 		redraw
 
@@ -139,6 +148,13 @@
 	if iparam == 13 || iparam == 27 {
 		s_dismiss = 1
 	}
+	return
+
+*on_activate
+
+	; ウィンドウがアクティブかどうか変化したときに呼ばれる。
+	; (wparamの下位ワードが0以外ならアクティブ)
+	s_active = (wparam & 0xFFFF) != 0
 	return
 
 ; ================================================
