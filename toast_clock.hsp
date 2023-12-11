@@ -25,7 +25,9 @@
 *start
 
 	; 多重起動を防止する <http://lhsp.s206.xrea.com/hsp_system.html#5>
-	CreateMutex 0, 0, "toast_clock"
+	; (Global\ をつけることで、システム全体で唯一のミューテックスにする)
+	; <https://learn.microsoft.com/ja-jp/windows/win32/termserv/kernel-object-namespaces>
+	CreateMutex 0, 0, "Global\\toast_clock"
 	GetLastError
 	if stat == 0x00B7 { ; ERROR_ALREADY_EXISTS
 		dialog "toast_clock はすでに実行中です", 1
