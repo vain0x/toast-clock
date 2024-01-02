@@ -43,6 +43,19 @@
 	s_interval = 30 * k_min
 #endif
 
+	; コマンドライン引数を解析する
+	; (数値Nを指定すると、N分ごとにポップアップを出す)
+	s_cmdline = dir_cmdline
+	s_cmdline = strtrim(s_cmdline,, ' ')
+	s_cmdline = strtrim(s_cmdline,, '"')
+	if is_digits(s_cmdline) {
+		s_interval = int(s_cmdline) * k_min
+		if s_interval < 0 || s_interval >= 24 * k_hour {
+			dialog strf("コマンドライン引数が不正です (s_cmdline = '%s')", s_cmdline), 1, "toast_clock"
+			end 1
+		}
+	}
+
 	; 色相(hue)のテーブル
 	; 色相の値は0が赤、60ぐらいが緑、120ぐらいが青、最大値は191
 	s_hue = 120
@@ -207,5 +220,22 @@
 	mi = t \ 60 : t /= 60
 	h = t
 	return strf("%02d:%02d:%02d.%03d", h, mi, s, ms)
+
+; 文字列が数字のみか (1～10文字)
+#defcfunc is_digits str s, \
+	local t, local len, local ch
+
+	t = s
+	len = strlen(t)
+	if len > 10 : return 0
+
+	repeat len
+		ch = peek(t, cnt)
+		if ('0' <= ch && ch <= '9') == 0 {
+			len = 0
+			break
+		}
+	loop
+	return len >= 1
 
 #global
