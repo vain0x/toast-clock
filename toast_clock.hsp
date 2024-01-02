@@ -64,8 +64,9 @@
 	bgscr k_wid, 200, 80, screen_hide
 	title "toast_clock"
 	font "Cascadia Mono", 36, font_bold
-	onclick gosub *on_click
-	onkey gosub *on_key
+
+	oncmd gosub *on_key_up, 0x101 ; WM_KEYUP
+	oncmd gosub *on_lbutton_up, 0x202 ; WM_LBUTTONUP
 
 	goto *main
 
@@ -165,18 +166,19 @@
 
 	goto *main
 
-*on_click
+*on_lbutton_up
 
-	logmes "on_click " + iparam
+	logmes "on_lbutton_up"
 	s_dismiss = 1
 	return
 
-*on_key
+*on_key_up
 
-	logmes "on_key " + iparam
+	logmes strf("on_key_up 0x%02X", wparam)
 
-	; 13: Enter, 27: Esc
-	if iparam == 13 || iparam == 27 {
+	; 0x0D: VK_RETURN (Enter)
+	; 0x1B: VK_ESCAPE (Esc)
+	if wparam == 0x0D || wparam == 0x1B {
 		s_dismiss = 1
 	}
 	return
