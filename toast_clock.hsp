@@ -30,7 +30,7 @@
 	CreateMutex 0, 0, "Global\\toast_clock"
 	GetLastError
 	if stat == 0x00B7 { ; ERROR_ALREADY_EXISTS
-		dialog "toast_clock ÇÕÇ∑Ç≈Ç…é¿çsíÜÇ≈Ç∑", 1
+		dialog "toast_clock ÇÕÇ∑Ç≈Ç…é¿çsíÜÇ≈Ç∑", 1, "toast_clock"
 		end 1
 	}
 
